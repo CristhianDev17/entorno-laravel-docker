@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: laravel-app
+    ports:
+      - "${APP_PORT:-8000}:80"
+    volumes:
+      - "${PROJECT_PATH}:/var/www/html"
+      - ./php.ini:/usr/local/etc/php/conf.d/custom.ini
+      - vendor_data:/var/www/html/vendor
+      - bootstrap_cache:/var/www/html/bootstrap/cache
+    depends_on:
+      - db
+    networks:
+      - laravel
+
+  db:
+    image: mariadb:10.11
+    container_name: laravel-mariadb
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-secret}
+      MYSQL_DATABASE: ${DB_DATABASE:-laravel}
+      MYSQL_USER: ${DB_USERNAME:-laravel}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-secret}
+    volumes:
+      - db_data:/var/lib/mysql
+    ports:
+      - "${DB_PORT:-3306}:3306"
+    networks:
+      - laravel
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: laravel-pma
+    restart: unless-stopped
+    ports:
+      - "${PMA_PORT:-8080}:80"
+    environment:
+      PMA_HOST: db
+      PMA_USER: root
+      PMA_PASSWORD: ${DB_PASSWORD:-secret}
+      UPLOAD_LIMIT: 128M
+    depends_on:
+      - db
+    networks:
+      - laravel
+
+volumes:
+  db_data:
+  vendor_data:
+  bootstrap_cache:
+
+networks:
+  laravel:
+    driver: bridge
