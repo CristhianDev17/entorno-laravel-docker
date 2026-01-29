@@ -34,7 +34,7 @@ docker exec -it laravel-app bash
 
 5. Instala las dependencias dentro del contenedor:
 ```bash
-composer install
+composer install --optimize-autoloader
 ```
 **Por qué:** Ejecutar Composer dentro del contenedor asegura que las extensiones y la versión de PHP sean consistentes con tu entorno Docker.
 
