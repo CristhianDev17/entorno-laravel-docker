@@ -12,6 +12,9 @@ RUN apt-get update && apt-get install -y \
     git \
     unzip \
     curl \
+    ghostscript \
+    libmagickwand-dev \
+    libmagickcore-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Configurar extensión GD
@@ -29,6 +32,14 @@ RUN docker-php-ext-install \
     pcntl \
     opcache
 
+# Instalar Imagick vía PECL
+RUN pecl install imagick \
+    && docker-php-ext-enable imagick
+
+# Habilitar lectura de PDFs en ImageMagick (deshabilitado por defecto)
+RUN find /etc/ImageMagick* -name "policy.xml" -exec \
+    sed -i 's/<policy domain="coder" rights="none" pattern="PDF" \/>/<policy domain="coder" rights="read|write" pattern="PDF" \/>/' {} \;
+
 # Instalar Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
@@ -44,5 +55,3 @@ RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf
 RUN chown -R www-data:www-data /var/www
 
 WORKDIR /var/www/html
-
-# Apache se ejecuta automáticamente como CMD en la imagen base

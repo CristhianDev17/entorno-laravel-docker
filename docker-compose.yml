@@ -12,7 +12,8 @@ services:
       - vendor_data:/var/www/html/vendor
       - bootstrap_cache:/var/www/html/bootstrap/cache
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     networks:
       - laravel
 
@@ -22,14 +23,24 @@ services:
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-secret}
+      MYSQL_DATABASE: ${DB_DATABASE:-db_print_orders}
       MYSQL_USER: ${DB_USERNAME:-laravel}
       MYSQL_PASSWORD: ${DB_PASSWORD:-secret}
+      MARIADB_CHARACTER_SET_SERVER: utf8mb4
+      MARIADB_COLLATION_SERVER: utf8mb4_unicode_ci
+      TZ: America/Lima
     volumes:
       - db_data:/var/lib/mysql
     ports:
       - "${DB_PORT:-3306}:3306"
     networks:
       - laravel
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      start_period: 10s
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
@@ -41,9 +52,10 @@ services:
       PMA_HOST: db
       PMA_USER: root
       PMA_PASSWORD: ${DB_PASSWORD:-secret}
-      UPLOAD_LIMIT: 128M
+      UPLOAD_LIMIT: 250M
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     networks:
       - laravel
 
