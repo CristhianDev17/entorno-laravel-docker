@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.prod    # ← usa el nuevo, no el local
-    image: tuusuario/tu-app-laravel:latest
+    image: cristhianrp/tu-app-laravel:latest
     container_name: laravel-app
     ports:
       - "80:80"
