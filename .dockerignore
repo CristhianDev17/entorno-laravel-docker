@@ -1,0 +1,34 @@
+# Dependencias (se instalan dentro del contenedor)
+vendor/
+node_modules/
+
+# Entornos
+.env
+.env.*
+!.env.example
+
+# Git
+.git
+.gitignore
+
+# Archivos solo de desarrollo
+docker-compose.yml
+docker-compose.dev.yml
+Dockerfile
+
+# Storage generado en runtime (se monta como volumen)
+storage/app/public/*
+storage/app/private/*
+storage/app/private/pedidos/*
+storage/framework/cache/data/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/logs/*
+
+# Mantener la estructura de carpetas vacías
+!storage/app/public/.gitignore
+!storage/framework/.gitignore
+!storage/framework/cache/.gitignore
+!storage/framework/sessions/.gitignore
+!storage/framework/views/.gitignore
+!storage/logs/.gitignore

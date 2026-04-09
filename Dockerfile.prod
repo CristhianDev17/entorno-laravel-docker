@@ -1,0 +1,70 @@
+FROM php:8.3-apache
+
+# Igual que tu Dockerfile actual hasta los permisos de Apache...
+RUN apt-get update && apt-get install -y \
+    libzip-dev \
+    libpng-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
+    libicu-dev \
+    libonig-dev \
+    zlib1g-dev \
+    git \
+    unzip \
+    curl \
+    ghostscript \
+    libmagickwand-dev \
+    libmagickcore-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg
+
+RUN docker-php-ext-install \
+    pdo_mysql \
+    mbstring \
+    bcmath \
+    gd \
+    intl \
+    zip \
+    exif \
+    pcntl \
+    opcache
+
+RUN pecl install imagick \
+    && docker-php-ext-enable imagick
+
+RUN find /etc/ImageMagick* -name "policy.xml" -exec \
+    sed -i 's/<policy domain="coder" rights="none" pattern="PDF" \/>/<policy domain="coder" rights="read|write" pattern="PDF" \/>/' {} \;
+
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+RUN a2enmod rewrite
+
+ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
+RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' \
+        /etc/apache2/sites-available/*.conf \
+    && sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' \
+        /etc/apache2/apache2.conf \
+        /etc/apache2/conf-available/*.conf
+
+COPY php.ini /usr/local/etc/php/conf.d/custom.ini
+
+WORKDIR /var/www/html
+
+# ── Esto es lo que cambia vs tu Dockerfile local ──
+# El código entra DENTRO de la imagen
+
+COPY composer.json composer.lock ./
+RUN composer install \
+    --no-dev \
+    --optimize-autoloader \
+    --no-interaction \
+    --no-scripts
+
+# Copiar todo el proyecto excepto lo que está en .dockerignore
+COPY . .
+
+RUN chown -R www-data:www-data /var/www/html \
+    && chmod -R 775 storage bootstrap/cache
+
+EXPOSE 80
